@@ -75,6 +75,10 @@ p{margin:0}
 .frame canvas,.frame .banner{position:absolute;inset:0;width:100%;height:100%;display:block}
 .frame .banner{object-fit:cover;opacity:0;transition:opacity 1.2s ease;filter:saturate(.9) brightness(.55)}
 .frame .banner.on{opacity:1}
+/* hero background film: silent, no controls, sized to cover the frame */
+.hero-film{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity 1.6s ease}
+.hero-film.on{opacity:1}
+.hero-film > div,.hero-film iframe{position:absolute;left:50%;top:50%;width:max(100%,calc(100% * var(--fr,2.39) / 1.7778));height:max(100%,calc(100% * 1.7778 / var(--fr,2.39)));transform:translate(-50%,-50%) scale(1.12);border:0;filter:brightness(.62) saturate(1.05)}
 .frame::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(2,4,9,.85) 100%);pointer-events:none;z-index:1}
 .guides{position:absolute;inset:14px;z-index:2;pointer-events:none;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(232,238,248,.6)}
 .guides span{position:absolute}
@@ -83,8 +87,15 @@ p{margin:0}
 .c1{top:26px;left:0;border-top-width:1px;border-left-width:1px}.c2{top:26px;right:0;border-top-width:1px;border-right-width:1px}
 .c3{bottom:26px;left:0;border-bottom-width:1px;border-left-width:1px}.c4{bottom:26px;right:0;border-bottom-width:1px;border-right-width:1px}
 .title-card{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:12px}
-.hero-mark{width:min(880px,88%);max-width:100%;height:auto;display:block;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(ellipse 58% 54% at 50% 50%,#000 72%,transparent 100%);mask-image:radial-gradient(ellipse 58% 54% at 50% 50%,#000 72%,transparent 100%)}
-@media (max-width:640px){.hero-mark{width:118%}}
+.hero-mark{position:relative;width:min(1080px,100%);aspect-ratio:1080/320;max-width:none;filter:drop-shadow(0 4px 24px rgba(0,0,0,.65))}
+.hero-mark img{position:absolute;left:0;top:0;width:100%;height:auto;display:block}
+.hero-mark::before,.hero-mark::after{content:"";position:absolute;left:50%;top:calc(142/320*100%);transform:translate(-50%,-50%);pointer-events:none;mix-blend-mode:screen}
+.hero-mark::before{width:130%;height:14%;background:radial-gradient(ellipse 50% 50% at 50% 50%,rgba(70,150,255,.75),rgba(47,134,255,.25) 40%,transparent 70%);animation:flare 5s ease-in-out infinite}
+.hero-mark::after{width:110%;height:2.5%;background:radial-gradient(ellipse 50% 50% at 50% 50%,#fff,rgba(160,205,255,.8) 25%,transparent 70%)}
+@keyframes flare{50%{opacity:.7;transform:translate(-50%,-50%) scaleX(.94)}}
+@media (prefers-reduced-motion:reduce){.hero-mark::before{animation:none}}
+.hero-mark img.neon{top:calc(208/320*100%);filter:drop-shadow(0 0 10px rgba(181,140,255,.75))}
+@media (max-width:640px){.hero-mark{width:132%}}
 .wordmark{font-family:var(--display);font-weight:900;text-transform:uppercase;line-height:.85;font-size:clamp(52px,10vw,150px);letter-spacing:.015em}
 .subline{font-family:var(--display);font-weight:500;text-transform:uppercase;letter-spacing:.6em;font-size:clamp(13px,2vw,26px);margin-right:-.6em;color:var(--ice)}
 .fade-up{animation:fadeUp 1.6s cubic-bezier(.2,.7,.2,1) both}
@@ -453,6 +464,7 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
     <div class="frame">
       <canvas id="light" aria-hidden="true"></canvas>
       <img class="banner" id="banner" alt="" hidden>
+      <div class="hero-film" id="heroFilm" aria-hidden="true"><div id="heroPlayer"></div></div>
       <div class="guides" aria-hidden="true">
         <span class="tl">D'VISION / ROLL 01</span>
         <span class="tr">2.39 : 1</span>
@@ -461,7 +473,10 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
         <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
       </div>
       <div class="title-card fade-up">
-        <img class="hero-mark" src="logo-wordmark.jpg" alt="D'Vision Motion Pictures" width="960" height="340">
+        <div class="hero-mark" role="img" aria-label="D'Vision Motion Pictures">
+          <img src="intro/letters.png" alt="" width="1080" height="212">
+          <img class="neon" src="intro/neon.png" alt="" width="1080" height="112">
+        </div>
       </div>
     </div>
 
@@ -710,8 +725,9 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
   }
 
   /* ---------- player: YouTube IFrame API, muted autoplay so no play button sits on the picture ---------- */
+  let ytPromise = null;
   function loadYT() {
-    return new Promise((res, rej) => {
+    return ytPromise = ytPromise || new Promise((res, rej) => {
       if (window.YT && YT.Player) return res();
       window.onYouTubeIframeAPIReady = res;
       const s = document.createElement("script");
@@ -761,6 +777,34 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
     player = new YT.Player("player", opts);
   }
   boot();
+
+  /* ---------- hero background film ---------- */
+  const HERO = { id: "4mx-0zOmGFc", start: 3 };
+  (async () => {
+    const wrap = document.getElementById("heroFilm"), frame = wrap.parentElement;
+    const fit = () => { const r = frame.getBoundingClientRect(); if (r.height) wrap.style.setProperty("--fr", (r.width / r.height).toFixed(4)); };
+    fit(); addEventListener("resize", fit);
+    try { await loadYT(); } catch (e) { return; }
+    let hp = null, shown = false;
+    const keepRolling = () => {
+      if (!hp || !hp.getCurrentTime) return;
+      const d = hp.getDuration(), c = hp.getCurrentTime();
+      if (d && c > d - .6) hp.seekTo(HERO.start, true);   // loop back to 0:03 before the end screen appears
+    };
+    hp = new YT.Player("heroPlayer", {
+      width: "100%", height: "100%", videoId: HERO.id, host: "https://www.youtube-nocookie.com",
+      playerVars: { autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, start: HERO.start, loop: 1, playlist: HERO.id },
+      events: {
+        onReady: e => { e.target.mute(); e.target.seekTo(HERO.start, true); e.target.playVideo(); setInterval(keepRolling, 250); },
+        onStateChange: e => {
+          if (e.data === 1 && !shown) { shown = true; setTimeout(() => wrap.classList.add("on"), 400); }   // fade in once frames are moving
+          if (e.data === 0) { e.target.seekTo(HERO.start, true); e.target.playVideo(); }
+          if (e.data === 2) e.target.playVideo();   // never stay paused
+        }
+      }
+    });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && hp && hp.playVideo) hp.playVideo(); });
+  })();
 
   /* ---------- timecode at 24 fps ---------- */
   const tcEls = [$("tc"), $("tc2")], t0 = performance.now(), pad = n => String(n).padStart(2, "0");
