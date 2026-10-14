@@ -76,9 +76,9 @@ p{margin:0}
 .frame .banner{object-fit:cover;opacity:0;transition:opacity 1.2s ease;filter:saturate(.9) brightness(.55)}
 .frame .banner.on{opacity:1}
 /* hero background film: silent, no controls, sized to cover the frame */
-.hero-film{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity 1.6s ease}
+.hero-film{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
 .hero-film.on{opacity:1}
-.hero-film > div,.hero-film iframe{position:absolute;left:50%;top:50%;width:max(100%,calc(100% * var(--fr,2.39) / 1.7778));height:max(100%,calc(100% * 1.7778 / var(--fr,2.39)));transform:translate(-50%,-50%) scale(1.12);border:0;filter:brightness(.62) saturate(1.05)}
+.hero-film > div,.hero-film iframe{position:absolute;left:50%;top:50%;width:var(--fw,100%);height:var(--fh,100%);max-width:none;transform:translate(-50%,-50%);border:0;filter:brightness(.62) saturate(1.05)}
 .frame::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(2,4,9,.85) 100%);pointer-events:none;z-index:1}
 .guides{position:absolute;inset:14px;z-index:2;pointer-events:none;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(232,238,248,.6)}
 .guides span{position:absolute}
@@ -782,14 +782,37 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
   const HERO = { id: "4mx-0zOmGFc", start: 3 };
   (async () => {
     const wrap = document.getElementById("heroFilm"), frame = wrap.parentElement;
-    const fit = () => { const r = frame.getBoundingClientRect(); if (r.height) wrap.style.setProperty("--fr", (r.width / r.height).toFixed(4)); };
+    // cover the frame like object-fit:cover, then overscan so YouTube's title bar and overlays sit outside the visible area
+    const OVERSCAN = 80;   // css px of player cropped off the top and bottom
+    const fit = () => {
+      const r = frame.getBoundingClientRect(); if (!r.height) return;
+      let w = r.width, h = w / (16 / 9);
+      if (h < r.height) { h = r.height; w = h * (16 / 9); }
+      const k = Math.max((r.height + OVERSCAN * 2) / h, (r.width + 40) / w, 1);
+      wrap.style.setProperty("--fw", Math.ceil(w * k) + "px");
+      wrap.style.setProperty("--fh", Math.ceil(h * k) + "px");
+    };
     fit(); addEventListener("resize", fit);
     try { await loadYT(); } catch (e) { return; }
-    let hp = null, shown = false;
+    let hp = null, shown = false, looping = false;
+    // only reveal once real frames past 0:03 are moving, so the cover image and loading spinner never show
+    const waitForFrames = p => {
+      const t0 = p.getCurrentTime ? p.getCurrentTime() : 0;
+      const check = () => {
+        if (shown) return;
+        const c = p.getCurrentTime ? p.getCurrentTime() : 0;
+        if (p.getPlayerState() === 1 && c >= HERO.start + .4 && c > t0 + .3) { shown = true; setTimeout(() => wrap.classList.add("on"), 300); }
+        else setTimeout(check, 150);
+      };
+      check();
+    };
     const keepRolling = () => {
       if (!hp || !hp.getCurrentTime) return;
       const d = hp.getDuration(), c = hp.getCurrentTime();
-      if (d && c > d - .6) hp.seekTo(HERO.start, true);   // loop back to 0:03 before the end screen appears
+      if (d && c > d - 1.8 && !looping) {   // fade out, jump back to 0:03 before the end screen, fade in when moving again
+        looping = true; wrap.classList.remove("on");
+        setTimeout(() => { hp.seekTo(HERO.start, true); hp.playVideo(); shown = false; looping = false; waitForFrames(hp); }, 1300);
+      }
     };
     hp = new YT.Player("heroPlayer", {
       width: "100%", height: "100%", videoId: HERO.id, host: "https://www.youtube-nocookie.com",
@@ -797,7 +820,7 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
       events: {
         onReady: e => { e.target.mute(); e.target.seekTo(HERO.start, true); e.target.playVideo(); setInterval(keepRolling, 250); },
         onStateChange: e => {
-          if (e.data === 1 && !shown) { shown = true; setTimeout(() => wrap.classList.add("on"), 400); }   // fade in once frames are moving
+          if (e.data === 1 && !shown) waitForFrames(e.target);
           if (e.data === 0) { e.target.seekTo(HERO.start, true); e.target.playVideo(); }
           if (e.data === 2) e.target.playVideo();   // never stay paused
         }
