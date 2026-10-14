@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="intro-lock">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -94,6 +94,14 @@ p{margin:0}
 .hero-mark::after{width:110%;height:2.5%;background:radial-gradient(ellipse 50% 50% at 50% 50%,#fff,rgba(160,205,255,.8) 25%,transparent 70%)}
 @keyframes flare{50%{opacity:.7;transform:translate(-50%,-50%) scaleX(.94)}}
 @media (prefers-reduced-motion:reduce){.hero-mark::before{animation:none}}
+.hero-mark img.gleam{opacity:0;filter:brightness(2.2) drop-shadow(0 0 6px rgba(160,200,255,.8));mix-blend-mode:screen}
+.curtain{position:absolute;inset:0;z-index:1;background:#010205;display:none;transition:opacity 1.6s ease}
+.curtain canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero-intro .curtain{display:block}
+.curtain.lifted{opacity:0}
+.hero-intro .hero-mark img:not(.gleam){opacity:0}
+.hero-intro .hero-mark:not(.lit)::before,.hero-intro .hero-mark:not(.lit)::after{opacity:0;animation:none}
+.hero-mark.lit::before,.hero-mark.lit::after{opacity:1;transition:opacity 1.2s ease}
 .hero-mark img.neon{top:calc(208/320*100%);filter:drop-shadow(0 0 10px rgba(181,140,255,.75))}
 @media (max-width:640px){.hero-mark{width:132%}}
 .wordmark{font-family:var(--display);font-weight:900;text-transform:uppercase;line-height:.85;font-size:clamp(52px,10vw,150px);letter-spacing:.015em}
@@ -212,236 +220,10 @@ footer{border-top:1px solid var(--rule);padding-block:36px 44px}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .endcard{font-family:var(--display);font-weight:900;font-size:clamp(80px,20vw,280px);line-height:.8;text-transform:uppercase;color:transparent;-webkit-text-stroke:1px var(--rule);text-align:center;padding-top:24px;user-select:none;overflow:hidden;white-space:nowrap}
 
-/* ---------- startup intro ---------- */
-html.intro-lock,html.intro-lock body{overflow:hidden}
-.intro{position:fixed;inset:0;z-index:1000;overflow:hidden;background:#010205;transition:opacity 1.1s ease,visibility 1.1s}
-.intro.out{opacity:0;visibility:hidden;pointer-events:none}
-.intro .box{position:absolute;left:50%;top:50%;width:min(112vw,128vh);aspect-ratio:1;transform:translate(-50%,-50%);will-change:transform}
-.intro .box img{position:absolute;left:0;width:100%;height:auto;display:block;user-select:none;pointer-events:none;max-width:none}
-#in-letters{top:calc(400/1080*100%);opacity:0}
-#in-gleam{top:calc(400/1080*100%);opacity:0;filter:brightness(2.2) drop-shadow(0 0 6px rgba(160,200,255,.8));mix-blend-mode:screen}
-#in-neon{top:calc(608/1080*100%);opacity:0}
-#in-fx{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:screen}
-#in-flash{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,#dcebff,#5a8fff 45%,transparent 80%);opacity:0;pointer-events:none;mix-blend-mode:screen}
-.intro .bars{position:absolute;left:0;right:0;height:0;background:#000;z-index:3;transition:height 1.4s cubic-bezier(.7,0,.2,1)}
-.intro .bars.top{top:0}.intro .bars.bot{bottom:0}
-.intro.letterbox .bars{height:9vh}
-#in-tag{position:absolute;left:50%;bottom:18vh;transform:translateX(-50%);font-family:var(--mono);font-size:clamp(10px,1.2vw,13px);letter-spacing:.6em;margin-right:-.6em;text-transform:uppercase;color:var(--dim);opacity:0;white-space:nowrap;z-index:4}
-#in-skip{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:max(18px,env(safe-area-inset-right,0px));z-index:6;font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--film);background:rgba(10,16,30,.6);border:1px solid rgba(232,238,248,.35);border-radius:999px;padding:9px 14px;cursor:pointer;opacity:.7}
-#in-skip:hover{border-color:var(--blue);opacity:1}
 </style>
 
 </head>
 <body>
-<div class="intro" id="in-stage" role="presentation">
-  <div class="box" id="in-box">
-    <img id="in-letters" src="intro/letters.png" alt="" width="1080" height="212">
-    <img id="in-gleam" src="intro/letters.png" alt="" width="1080" height="212">
-    <img id="in-neon" src="intro/neon.png" alt="" width="1080" height="112">
-  </div>
-  <canvas id="in-fx" aria-hidden="true"></canvas>
-  <div id="in-flash"></div>
-  <div class="bars top"></div><div class="bars bot"></div>
-  <div id="in-tag">Be a Visionary</div>
-  <button id="in-skip" type="button">Skip intro</button>
-</div>
-<script>
-
-(() => {
-  const $ = id => document.getElementById(id);
-  const stage = $("in-stage"), box = $("in-box"), letters = $("in-letters"), gleam = $("in-gleam"), neon = $("in-neon"),
-        flash = $("in-flash"), tag = $("in-tag"), cv = $("in-fx"), cx = cv.getContext("2d");
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const CORE = { x: 540 / 1080, y: 542 / 1080 };   // the light behind the S, in logo units
-  const END = 6.2;
-
-  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
-  const seg = (t, a, b) => clamp((t - a) / (b - a));
-  const easeOutExpo = x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
-  const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-
-  let W, H, DPR, stars = [], dust = [];
-  function size() {
-    DPR = Math.min(devicePixelRatio || 1, 2);
-    W = cv.width = innerWidth * DPR; H = cv.height = innerHeight * DPR;
-    stars = Array.from({ length: Math.round(W * H / 9000) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.1 * DPR + .2, a: Math.random(), tw: Math.random() * 6 }));
-    dust = Array.from({ length: 60 }, () => ({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3, r: Math.random() * 1.6 * DPR + .4, a: Math.random() }));
-  }
-  size(); addEventListener("resize", size);
-
-  function corePoint() {
-    const r = box.getBoundingClientRect();
-    return { x: (r.left + r.width * CORE.x) * DPR, y: (r.top + r.height * CORE.y) * DPR, s: r.width * DPR };
-  }
-
-  // elongated glow: a radial gradient squashed vertically
-  function streak(x, y, len, thick, color, alpha) {
-    if (len <= 0 || alpha <= 0) return;
-    cx.save(); cx.translate(x, y); cx.scale(1, thick / len);
-    const g = cx.createRadialGradient(0, 0, 0, 0, 0, len);
-    g.addColorStop(0, `rgba(${color},${alpha})`); g.addColorStop(.25, `rgba(${color},${alpha * .45})`); g.addColorStop(1, `rgba(${color},0)`);
-    cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, len, 0, 6.2832); cx.fill(); cx.restore();
-  }
-  function glow(x, y, r, stops) {
-    if (r <= 0) return;
-    const g = cx.createRadialGradient(x, y, 0, x, y, r);
-    stops.forEach(([o, c]) => g.addColorStop(o, c));
-    cx.fillStyle = g; cx.fillRect(x - r, y - r, r * 2, r * 2);
-  }
-
-  // ---------- optional sound: synthesized riser, hit and hum ----------
-  let actx = null;
-  function playSound() {
-    try {
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-      const now = actx.currentTime, out = actx.createGain(); out.gain.value = .55; out.connect(actx.destination);
-      const noise = actx.createBuffer(1, actx.sampleRate * 3, actx.sampleRate), d = noise.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-      // riser into the ignition
-      const n = actx.createBufferSource(); n.buffer = noise;
-      const bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 6;
-      bp.frequency.setValueAtTime(200, now + .4); bp.frequency.exponentialRampToValueAtTime(5000, now + 1.95);
-      const ng = actx.createGain(); ng.gain.setValueAtTime(0, now + .4); ng.gain.linearRampToValueAtTime(.35, now + 1.9); ng.gain.linearRampToValueAtTime(0, now + 2.05);
-      n.connect(bp).connect(ng).connect(out); n.start(now + .4); n.stop(now + 2.2);
-      // the hit when the streak fires
-      const o = actx.createOscillator(); o.type = "sine";
-      o.frequency.setValueAtTime(110, now + 1.95); o.frequency.exponentialRampToValueAtTime(38, now + 3.4);
-      const og = actx.createGain(); og.gain.setValueAtTime(0, now + 1.94); og.gain.linearRampToValueAtTime(.9, now + 1.98); og.gain.exponentialRampToValueAtTime(.001, now + 3.6);
-      o.connect(og).connect(out); o.start(now + 1.94); o.stop(now + 3.7);
-      // shimmer tail
-      const s = actx.createBufferSource(); s.buffer = noise;
-      const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 6000;
-      const sg = actx.createGain(); sg.gain.setValueAtTime(.18, now + 1.98); sg.gain.exponentialRampToValueAtTime(.001, now + 3.2);
-      s.connect(hp).connect(sg).connect(out); s.start(now + 1.98); s.stop(now + 3.3);
-      // neon buzz
-      const b = actx.createOscillator(); b.type = "sawtooth"; b.frequency.value = 60;
-      const lp = actx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 400;
-      const bg = actx.createGain(); bg.gain.value = 0;
-      [3.0, 3.08, 3.18, 3.3, 3.42, 3.55].forEach((t, i) => bg.gain.setValueAtTime(i % 2 ? 0 : .08, now + t));
-      bg.gain.setValueAtTime(.05, now + 3.6); bg.gain.exponentialRampToValueAtTime(.001, now + 5.2);
-      b.connect(lp).connect(bg).connect(out); b.start(now + 3.0); b.stop(now + 5.3);
-    } catch (e) {}
-  }
-
-  // neon tube flicker: on/off pairs, then steady
-  const NEON = [[3.0, .7], [3.07, 0], [3.16, .9], [3.22, .15], [3.31, 1], [3.38, .3], [3.46, 1]];
-  function neonLevel(t) {
-    let v = 0; for (const [at, lv] of NEON) if (t >= at) v = lv;
-    return v;
-  }
-
-  let t0 = 0, raf = 0, done = false;
-  function frame(now) {
-    const t = reduce ? END : (now - t0) / 1000;
-    const p = corePoint();
-    cx.clearRect(0, 0, W, H);
-
-    // stars and drifting dust
-    const starA = seg(t, 0, 1.2);
-    for (const s of stars) {
-      cx.fillStyle = `rgba(200,220,255,${starA * (.25 + .5 * Math.abs(Math.sin(t * .8 + s.tw))) * s.a})`;
-      cx.fillRect(s.x, s.y, s.r, s.r);
-    }
-    for (const d of dust) {
-      d.x += d.vx; d.y += d.vy;
-      if (d.x < 0) d.x = W; if (d.x > W) d.x = 0; if (d.y < 0) d.y = H; if (d.y > H) d.y = 0;
-      const near = 1 - clamp(Math.hypot(d.x - p.x, d.y - p.y) / (W * .5));
-      cx.fillStyle = `rgba(180,210,255,${seg(t, 1.9, 2.6) * near * .6 * d.a})`;
-      cx.beginPath(); cx.arc(d.x, d.y, d.r, 0, 6.2832); cx.fill();
-    }
-
-    // ignition: a point of light wakes up behind the S
-    const ign = easeInOut(seg(t, .5, 1.85));
-    const flick = t < 1.9 ? .85 + .15 * Math.sin(t * 60) * Math.sin(t * 23) : 1;
-    const settle = 1 - .25 * easeInOut(seg(t, 2.1, 3.4));
-    const breathe = t > 3.4 ? 1 + .06 * Math.sin((t - 3.4) * 2.2) : 1;
-    const coreI = ign * flick * settle * breathe;
-    glow(p.x, p.y, p.s * (.02 + .09 * ign) * breathe, [[0, `rgba(255,255,255,${coreI})`], [.18, `rgba(170,210,255,${coreI * .8})`], [.5, `rgba(47,134,255,${coreI * .35})`], [1, "rgba(47,134,255,0)"]]);
-
-    // the anamorphic streak fires out from the core and carries the reveal with it
-    const fire = easeOutExpo(seg(t, 1.85, 3.3));
-    const sLen = p.s * (.02 + .9 * fire);
-    const sA = (ign * .9 + fire * .4) * settle * breathe;
-    streak(p.x, p.y, sLen * 1.3, p.s * .045, "47,134,255", sA * .55);
-    streak(p.x, p.y, sLen, p.s * .012, "150,200,255", sA * .9);
-    streak(p.x, p.y, sLen * .55, p.s * .003, "255,255,255", sA);
-
-    // lens ghosts along the line through the frame centre
-    const gA = fire * settle * .35;
-    if (gA > 0) {
-      const cxm = W / 2, cym = H / 2;
-      [[-.6, .025, "90,150,255"], [-1.1, .045, "140,110,255"], [-1.6, .015, "120,190,255"], [.45, .02, "160,120,255"]].forEach(([k, r, c]) => {
-        const gx = cxm + (p.x - cxm) * k, gy = cym + (p.y - cym) * k;
-        glow(gx, gy, p.s * r, [[0, `rgba(${c},0)`], [.7, `rgba(${c},${gA * .5})`], [.85, `rgba(${c},${gA})`], [1, `rgba(${c},0)`]]);
-      });
-    }
-
-    // letters: a soft mask opens outward from the core in step with the streak
-    const reveal = easeOutExpo(seg(t, 1.9, 3.6));
-    const half = reveal * 62, edge = 4 + 10 * (1 - reveal);   // in % of the logo box
-    const c = CORE.x * 100;
-    const m = `linear-gradient(90deg,transparent ${c - half - edge}%,#000 ${c - half}%,#000 ${c + half}%,transparent ${c + half + edge}%)`;
-    letters.style.webkitMaskImage = letters.style.maskImage = m;
-    letters.style.opacity = t > 1.9 ? 1 : 0;
-    const hot = 1 - easeInOut(seg(t, 2.0, 3.3));
-    letters.style.filter = `brightness(${1 + 2.2 * hot}) blur(${3 * hot}px) drop-shadow(0 0 ${14 * hot}px rgba(120,180,255,${.9 * hot}))`;
-
-    // a specular gleam travels across the finished letters
-    const gp = seg(t, 3.0, 4.1);
-    if (gp > 0 && gp < 1) {
-      const x = -20 + gp * 140;
-      gleam.style.opacity = 1;
-      gleam.style.webkitMaskImage = gleam.style.maskImage = `linear-gradient(105deg,transparent ${x - 8}%,#000 ${x}%,transparent ${x + 8}%)`;
-    } else gleam.style.opacity = 0;
-
-    // flash on impact
-    const fl = t >= 1.9 ? Math.exp(-(t - 1.9) * 5) * seg(t, 1.88, 1.95) : 0;
-    flash.style.opacity = fl * .55;
-
-    // neon "motion pictures"
-    const nv = neonLevel(t);
-    neon.style.opacity = nv;
-    neon.style.filter = `drop-shadow(0 0 ${6 + 10 * nv}px rgba(181,140,255,${.4 + .4 * nv}))`;
-
-    // camera: tiny shake on impact, then a slow push in
-    const shake = t > 1.9 && t < 2.4 ? (1 - seg(t, 1.9, 2.4)) * 3 : 0;
-    const push = 1 + .035 * easeInOut(seg(t, 1.9, END + 2));
-    box.style.transform = `translate(calc(-50% + ${(Math.random() - .5) * shake}px), calc(-50% + ${(Math.random() - .5) * shake}px)) scale(${push})`;
-
-    // tagline and controls
-    tag.style.opacity = easeInOut(seg(t, 4.1, 5.0)) * .9;
-    tag.style.letterSpacing = `${.6 + .25 * (1 - seg(t, 4.1, 5.6))}em`;
-    if (t > 2.2) stage.classList.add("letterbox");
-    if (t > 6.4 && !done) { done = true; finish(); }
-
-    raf = requestAnimationFrame(frame);
-  }
-
-  function start(withSound) {
-    cancelAnimationFrame(raf);
-    done = false; stage.classList.remove("letterbox");
-    t0 = performance.now();
-    if (withSound) playSound();
-    raf = requestAnimationFrame(frame);
-  }
-  function finish() {
-    if (stage.classList.contains("out")) return;
-    stage.classList.add("out");
-    document.documentElement.classList.remove("intro-lock");
-    try { sessionStorage.setItem("dv-intro", "1"); } catch (e) {}
-    setTimeout(() => { cancelAnimationFrame(raf); stage.remove(); }, 1200);
-  }
-  $("in-skip").addEventListener("click", finish);
-  addEventListener("keydown", e => { if (e.key === "Escape") finish(); });
-
-  // wait for the artwork before rolling
-  let seen = false; try { seen = sessionStorage.getItem("dv-intro") === "1"; } catch (e) {}
-  if (reduce || seen) { document.documentElement.classList.remove("intro-lock"); stage.remove(); return; }
-  let left = 3;
-  const go = () => { if (--left === 0) start(false); };
-  [letters, gleam, neon].forEach(im => im.complete ? go() : (im.onload = go, im.onerror = go));
-})();
-</script>
 <div class="atmos" aria-hidden="true"><canvas id="grain"></canvas></div>
 
 <nav class="nav" aria-label="Main">
@@ -464,6 +246,7 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
     <div class="frame">
       <canvas id="light" aria-hidden="true"></canvas>
       <div class="hero-film" id="heroFilm" aria-hidden="true"><div id="heroPlayer"></div></div>
+      <div class="curtain" id="curtain" aria-hidden="true"><canvas id="curtainFx"></canvas></div>
       <div class="guides" aria-hidden="true">
         <span class="tl">D'VISION / ROLL 01</span>
         <span class="tr">2.39 : 1</span>
@@ -471,12 +254,14 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
         <span class="br" id="tc">00:00:00:00</span>
         <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
       </div>
-      <div class="title-card fade-up">
-        <div class="hero-mark" role="img" aria-label="D'Vision Motion Pictures">
-          <img src="intro/letters.png" alt="" width="1080" height="212">
-          <img class="neon" src="intro/neon.png" alt="" width="1080" height="112">
+      <div class="title-card">
+        <div class="hero-mark" id="heroMark" role="img" aria-label="D'Vision Motion Pictures">
+          <img id="hmLetters" src="intro/letters.png" alt="" width="1080" height="212">
+          <img class="gleam" id="hmGleam" src="intro/letters.png" alt="" width="1080" height="212">
+          <img class="neon" id="hmNeon" src="intro/neon.png" alt="" width="1080" height="112">
         </div>
       </div>
+      <script>if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("hero-intro");</script>
     </div>
 
     <div class="hero-foot">
@@ -767,6 +552,100 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
   }
   boot();
 
+
+  /* ---------- hero intro: the light behind the S ignites and reveals the logo, then the curtain lifts onto the film ---------- */
+  let cueFilm; const filmCue = new Promise(r => cueFilm = r);   // tells the hero film when to start rolling
+  (() => {
+    const root = document.documentElement;
+    if (!root.classList.contains("hero-intro")) { cueFilm(); return; }
+    const mark = $("heroMark"), letters = $("hmLetters"), gleam = $("hmGleam"), neon = $("hmNeon"),
+          curtain = $("curtain"), cv = $("curtainFx"), cx = cv.getContext("2d");
+    const CORE = { x: 540 / 1080, y: 142 / 320 };   // the light behind the S, in logo units
+    const LIFT = 4.7, END = LIFT + 1.7, FILM_AT = 1.2;
+    const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+    const seg = (t, a, b) => clamp((t - a) / (b - a));
+    const easeOutExpo = x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+    const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    let W, H, D, stars = [];
+    const size = () => {
+      const r = cv.getBoundingClientRect(); D = Math.min(devicePixelRatio || 1, 2);
+      W = cv.width = Math.max(1, r.width * D); H = cv.height = Math.max(1, r.height * D);
+      stars = Array.from({ length: Math.round(W * H / 7000) }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * D + .2, a: Math.random(), tw: Math.random() * 6 }));
+    };
+    size(); addEventListener("resize", size);
+    const streak = (x, y, len, thick, c, a) => {
+      if (len <= 0 || a <= 0) return;
+      cx.save(); cx.translate(x, y); cx.scale(1, thick / len);
+      const g = cx.createRadialGradient(0, 0, 0, 0, 0, len);
+      g.addColorStop(0, `rgba(${c},${a})`); g.addColorStop(.25, `rgba(${c},${a * .45})`); g.addColorStop(1, `rgba(${c},0)`);
+      cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, len, 0, 6.2832); cx.fill(); cx.restore();
+    };
+    const glow = (x, y, r, stops) => {
+      if (r <= 0) return;
+      const g = cx.createRadialGradient(x, y, 0, x, y, r); stops.forEach(([o, c]) => g.addColorStop(o, c));
+      cx.fillStyle = g; cx.fillRect(x - r, y - r, r * 2, r * 2);
+    };
+    const NEON = [[3.0, .7], [3.07, 0], [3.16, .9], [3.22, .15], [3.31, 1], [3.38, .3], [3.46, 1]];
+    const neonLevel = t => { let v = 0; for (const [at, lv] of NEON) if (t >= at) v = lv; return v; };
+    let t0 = 0, cued = false, lifted = false;
+
+    function frame(now) {
+      const t = (now - t0) / 1000;
+      const cr = cv.getBoundingClientRect(), mr = mark.getBoundingClientRect();
+      const px = (mr.left - cr.left + mr.width * CORE.x) * D, py = (mr.top - cr.top + mr.height * CORE.y) * D, S = mr.width * D;
+      cx.clearRect(0, 0, W, H);
+      const starA = seg(t, 0, 1.2);
+      for (const st of stars) { cx.fillStyle = `rgba(200,220,255,${starA * (.25 + .5 * Math.abs(Math.sin(t * .8 + st.tw))) * st.a})`; cx.fillRect(st.x, st.y, st.r, st.r); }
+
+      const ign = easeInOut(seg(t, .5, 1.85));
+      const flick = t < 1.9 ? .85 + .15 * Math.sin(t * 60) * Math.sin(t * 23) : 1;
+      const settle = 1 - .3 * easeInOut(seg(t, 2.1, 3.6));
+      const coreI = ign * flick * settle;
+      glow(px, py, S * (.02 + .09 * ign), [[0, `rgba(255,255,255,${coreI})`], [.18, `rgba(170,210,255,${coreI * .8})`], [.5, `rgba(47,134,255,${coreI * .35})`], [1, "rgba(47,134,255,0)"]]);
+      const fire = easeOutExpo(seg(t, 1.85, 3.3));
+      const len = S * (.02 + .9 * fire), sa = (ign * .9 + fire * .4) * settle;
+      streak(px, py, len * 1.3, S * .045, "47,134,255", sa * .55);
+      streak(px, py, len, S * .012, "150,200,255", sa * .9);
+      streak(px, py, len * .55, S * .003, "255,255,255", sa);
+
+      // letters open outward from the S as the streak travels
+      const reveal = easeOutExpo(seg(t, 1.9, 3.6)), half = reveal * 62, edge = 4 + 10 * (1 - reveal), c = CORE.x * 100;
+      const m = t < 3.7 ? `linear-gradient(90deg,transparent ${c - half - edge}%,#000 ${c - half}%,#000 ${c + half}%,transparent ${c + half + edge}%)` : "none";
+      letters.style.webkitMaskImage = letters.style.maskImage = m;
+      letters.style.opacity = t > 1.9 ? 1 : 0;
+      const hot = 1 - easeInOut(seg(t, 2.0, 3.3));
+      letters.style.filter = hot > 0 ? `brightness(${1 + 2.2 * hot}) blur(${3 * hot}px) drop-shadow(0 0 ${14 * hot}px rgba(120,180,255,${.9 * hot}))` : "";
+
+      const gp = seg(t, 3.0, 4.1);
+      if (gp > 0 && gp < 1) { const x = -20 + gp * 140; gleam.style.opacity = 1; gleam.style.webkitMaskImage = gleam.style.maskImage = `linear-gradient(105deg,transparent ${x - 8}%,#000 ${x}%,transparent ${x + 8}%)`; }
+      else gleam.style.opacity = 0;
+
+      const nv = neonLevel(t);
+      neon.style.opacity = nv;
+
+      // flash and a small jolt on impact, then the logo eases into its resting place
+      const fl = t >= 1.9 ? Math.exp(-(t - 1.9) * 5) * seg(t, 1.88, 1.95) : 0;
+      curtain.style.background = fl > .01 ? `radial-gradient(ellipse at ${px / W * 100}% ${py / H * 100}%,rgba(140,180,255,${fl * .55}),#010205 70%)` : "";
+      const shake = t > 1.9 && t < 2.4 ? (1 - seg(t, 1.9, 2.4)) * 3 : 0;
+      const push = 1.04 - .04 * easeInOut(seg(t, 1.9, LIFT));
+      mark.style.transform = `translate(${(Math.random() - .5) * shake}px,${(Math.random() - .5) * shake}px) scale(${push})`;
+
+      if (t > 3.6) mark.classList.add("lit");           // the resting flare takes over from the drawn streak
+      if (t > FILM_AT && !cued) { cued = true; cueFilm(); }
+      if (t > LIFT && !lifted) { lifted = true; curtain.classList.add("lifted"); }
+      if (t < END) requestAnimationFrame(frame);
+      else finish();
+    }
+    function finish() {
+      [letters, gleam, neon, mark].forEach(el => { el.style.cssText = ""; });
+      root.classList.remove("hero-intro"); curtain.classList.remove("lifted");
+      cueFilm();
+    }
+    let left = 3;
+    const go = () => { if (--left === 0) { t0 = performance.now(); requestAnimationFrame(frame); } };
+    [letters, gleam, neon].forEach(im => im.complete ? go() : (im.onload = go, im.onerror = go));
+  })();
+
   /* ---------- hero background film ---------- */
   const HERO = { id: "4mx-0zOmGFc", start: 3 };   // visible from 0:03; the first seconds play hidden while YouTube's on-screen buttons fade away
   (async () => {
@@ -783,7 +662,8 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
     };
     fit(); addEventListener("resize", fit);
     try { await loadYT(); } catch (e) { return; }
-    let hp = null, shown = false, looping = false;
+    let hp = null, shown = false, looping = false, rolling = false;
+    filmCue.then(() => rolling = true);
     // only reveal once real frames past 0:03 are moving, so the cover image and loading spinner never show
     const waitForFrames = p => {
       const t0 = p.getCurrentTime ? p.getCurrentTime() : 0;
@@ -805,17 +685,17 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
     };
     hp = new YT.Player("heroPlayer", {
       width: "100%", height: "100%", videoId: HERO.id, host: "https://www.youtube-nocookie.com",
-      playerVars: { autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3 },
+      playerVars: { autoplay: 0, mute: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3 },
       events: {
-        onReady: e => { e.target.mute(); e.target.playVideo(); setInterval(keepRolling, 250); },
+        onReady: e => { e.target.mute(); filmCue.then(() => { e.target.playVideo(); setInterval(keepRolling, 250); }); },
         onStateChange: e => {
           if (e.data === 1 && !shown) waitForFrames(e.target);
           if (e.data === 0) { wrap.classList.remove("on"); shown = false; e.target.seekTo(0, true); e.target.playVideo(); waitForFrames(e.target); }
-          if (e.data === 2) e.target.playVideo();   // never stay paused
+          if (e.data === 2 || (e.data === 5 && rolling)) e.target.playVideo();   // never stay paused
         }
       }
     });
-    document.addEventListener("visibilitychange", () => { if (!document.hidden && hp && hp.playVideo) hp.playVideo(); });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && rolling && hp && hp.playVideo) hp.playVideo(); });
   })();
 
   /* ---------- timecode at 24 fps ---------- */
