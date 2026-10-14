@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04060b">
+<meta property="og:title" content="D'Vision Motion Pictures">
+<meta property="og:description" content="Independent film from Miami, Florida. Be a Visionary.">
+<meta property="og:image" content="logo.jpg">
+<link rel="icon" href="favicon.jpg" type="image/jpeg">
+<link rel="apple-touch-icon" href="apple-touch-icon.jpg">
+<title>D'Vision Motion Pictures</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="D'Vision Motion Pictures is an independent film collective from Miami, Florida. Be a Visionary.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a night-time projection booth. Letterboxed hero with the channel logo, a live screening room, the full catalogue, slate-card facts, socials. */
+:root{
+  --ink:#04060b;          /* the house with the lights down */
+  --night:#08101d;        /* deep navy for raised bands */
+  --booth:#0d1726;        /* card surfaces */
+  --rule:#1b2a40;
+  --film:#e8eef8;         /* cool projector-white for type */
+  --dim:#8d9cb3;          /* secondary type */
+  --blue:#2f86ff;         /* the brand blue */
+  --ice:#9cc8ff;          /* light blue for highlights */
+  --violet:#b58cff;       /* the neon purple of "motion pictures" in the logo */
+  --display:"Big Shoulders Display","Arial Narrow","Helvetica Neue Condensed",Impact,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --gutter-l:max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r:max(16px, env(safe-area-inset-right, 0px));
+  --wrap:1200px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--ink);color:var(--film);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.wrap{max-width:var(--wrap);margin-inline:auto;padding-left:var(--gutter-l);padding-right:var(--gutter-r)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ice)}
+h1,h2,h3{font-family:var(--display);font-weight:900;line-height:.9;letter-spacing:.01em;text-transform:uppercase;margin:0;text-wrap:balance}
+h2{font-size:clamp(44px,7vw,92px)}
+p{margin:0}
+
+/* background atmosphere: soft blue haze + faint grain, always BEHIND content */
+.atmos{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  radial-gradient(60vw 50vh at 85% 0%,rgba(47,134,255,.10),transparent 70%),
+  radial-gradient(50vw 60vh at 0% 100%,rgba(140,90,255,.07),transparent 70%)}
+#grain{position:absolute;inset:0;width:100%;height:100%;opacity:.035}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:color-mix(in srgb,var(--ink) 80%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--rule)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo{height:34px;width:auto;flex:none;display:block;mix-blend-mode:screen;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.brand b{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.06em;text-transform:uppercase}
+.nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0}
+.nav ul a{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--dim);transition:color .2s}
+.nav ul a:hover{color:var(--film)}
+.live{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--dim)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 10px var(--blue);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (max-width:760px){.nav ul{display:none}}
+
+/* ---------- hero ---------- */
+.hero{padding-block:clamp(24px,4vw,48px) clamp(48px,7vw,88px)}
+.frame{position:relative;max-width:100%;aspect-ratio:2.39/1;border-radius:3px;overflow:hidden;background:#000;isolation:isolate;border:1px solid var(--rule)}
+@media (max-width:640px){.frame{aspect-ratio:4/5}}
+.frame canvas,.frame .banner{position:absolute;inset:0;width:100%;height:100%;display:block}
+.frame .banner{object-fit:cover;opacity:0;transition:opacity 1.2s ease;filter:saturate(.9) brightness(.55)}
+.frame .banner.on{opacity:1}
+.frame::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(2,4,9,.85) 100%);pointer-events:none;z-index:1}
+.guides{position:absolute;inset:14px;z-index:2;pointer-events:none;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(232,238,248,.6)}
+.guides span{position:absolute}
+.guides .tl{top:0;left:0}.guides .tr{top:0;right:0}.guides .bl{bottom:0;left:0}.guides .br{bottom:0;right:0;font-variant-numeric:tabular-nums}
+.corner{position:absolute;width:18px;height:18px;border:0 solid rgba(156,200,255,.55)}
+.c1{top:26px;left:0;border-top-width:1px;border-left-width:1px}.c2{top:26px;right:0;border-top-width:1px;border-right-width:1px}
+.c3{bottom:26px;left:0;border-bottom-width:1px;border-left-width:1px}.c4{bottom:26px;right:0;border-bottom-width:1px;border-right-width:1px}
+.title-card{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:12px}
+.hero-mark{width:min(880px,88%);max-width:100%;height:auto;display:block;mix-blend-mode:screen;-webkit-mask-image:radial-gradient(ellipse 58% 54% at 50% 50%,#000 72%,transparent 100%);mask-image:radial-gradient(ellipse 58% 54% at 50% 50%,#000 72%,transparent 100%)}
+@media (max-width:640px){.hero-mark{width:118%}}
+.wordmark{font-family:var(--display);font-weight:900;text-transform:uppercase;line-height:.85;font-size:clamp(52px,10vw,150px);letter-spacing:.015em}
+.subline{font-family:var(--display);font-weight:500;text-transform:uppercase;letter-spacing:.6em;font-size:clamp(13px,2vw,26px);margin-right:-.6em;color:var(--ice)}
+.fade-up{animation:fadeUp 1.6s cubic-bezier(.2,.7,.2,1) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@media (prefers-reduced-motion:reduce){.fade-up{animation:none}}
+
+.hero-foot{display:grid;grid-template-columns:1.3fr 1fr;gap:clamp(24px,5vw,72px);align-items:end;margin-top:clamp(28px,4vw,48px)}
+.hero-foot h1{font-size:clamp(40px,6vw,78px)}
+.hero-foot h1 em{font-style:normal;background:linear-gradient(90deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-foot p{color:var(--dim);max-width:46ch}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 20px;font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border:1px solid var(--film);border-radius:999px;transition:background .25s,color .25s,border-color .25s,box-shadow .25s;cursor:pointer;background:transparent;color:var(--film)}
+.btn.solid{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.solid:hover{box-shadow:0 0 30px rgba(47,134,255,.55);background:var(--blue);color:#fff}
+.btn:hover{background:var(--film);color:var(--ink);border-color:var(--film)}
+@media (max-width:760px){.hero-foot{grid-template-columns:1fr}}
+
+/* ---------- marquee strip ---------- */
+.strip{border-block:1px solid var(--rule);overflow:hidden;background:var(--night)}
+.strip .track{display:flex;width:max-content;animation:slide 40s linear infinite}
+.strip span{font-family:var(--display);font-weight:700;text-transform:uppercase;font-size:clamp(26px,3.6vw,44px);letter-spacing:.04em;padding:14px 28px;white-space:nowrap;color:var(--dim)}
+.strip span:nth-child(3n+1){color:var(--film)}
+.strip span::after{content:"\2726";color:var(--violet);font-size:.5em;vertical-align:middle;margin-left:56px}
+@keyframes slide{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.strip .track{animation:none}}
+
+section{padding-block:clamp(64px,9vw,128px)}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:clamp(28px,4vw,44px)}
+.head p{color:var(--dim);max-width:42ch}
+.head > div{display:grid;gap:14px;min-width:0}
+
+/* ---------- screening room ---------- */
+.theater{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:var(--night);box-shadow:0 50px 140px -50px rgba(47,134,255,.45)}
+@media (max-width:900px){.theater{grid-template-columns:1fr}}
+.screen{position:relative;aspect-ratio:16/9;max-width:100%;background:#000}
+.screen > div,.screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.screen-msg{position:absolute;inset:0;display:grid;place-content:center;gap:10px;text-align:center;padding:24px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.screen-msg b{font-family:var(--display);font-size:clamp(28px,4vw,48px);letter-spacing:.04em;color:var(--film)}
+.unmute{position:absolute;top:12px;right:12px;z-index:2;padding:8px 14px;font-size:11px;background:rgba(4,6,11,.75);backdrop-filter:blur(6px);border-color:rgba(232,238,248,.4)}
+.now{display:grid;align-content:start;gap:14px;padding:clamp(20px,2.4vw,30px);border-left:1px solid var(--rule);min-width:0}
+@media (max-width:900px){.now{border-left:0;border-top:1px solid var(--rule)}}
+.now h3{font-size:clamp(30px,3.2vw,44px);line-height:.95;overflow-wrap:anywhere}
+.now .meta{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);font-variant-numeric:tabular-nums}
+.now p{color:var(--dim);font-size:15px;max-height:9.6em;overflow:auto;white-space:pre-line;overflow-wrap:anywhere}
+.now .ctrls{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.now .ctrls .btn{padding:10px 16px;font-size:12px}
+
+/* ---------- catalogue ---------- */
+.cat-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin:clamp(48px,6vw,72px) 0 20px}
+.cat-head h3{font-size:clamp(32px,4vw,52px)}
+.cat-head span{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+@media (max-width:1000px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.card{display:grid;gap:10px;text-align:left;padding:0;background:none;border:0;color:inherit;font:inherit;cursor:pointer;min-width:0}
+.thumb{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:3px;overflow:hidden;background:linear-gradient(135deg,var(--booth),var(--night));border:1px solid var(--rule);transition:border-color .25s,box-shadow .3s}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.2,.7,.2,1),filter .4s;filter:saturate(.85) brightness(.85)}
+.card:hover .thumb img,.card:focus-visible .thumb img{transform:scale(1.05);filter:none}
+.card:hover .thumb{border-color:var(--blue);box-shadow:0 14px 40px -14px rgba(47,134,255,.6)}
+.card.playing .thumb{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet),0 0 30px -6px rgba(181,140,255,.6)}
+.card.playing .reelno{color:var(--violet)}
+.reelno{position:absolute;left:8px;top:8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:3px 7px;background:rgba(4,6,11,.72);border-radius:2px;color:var(--ice);font-variant-numeric:tabular-nums}
+.card.playing .reelno::after{content:" · NOW PLAYING"}
+.card b{font-weight:600;font-size:15px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card small{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-variant-numeric:tabular-nums}
+.card.ghost .thumb{animation:shimmer 1.6s ease-in-out infinite}
+@keyframes shimmer{50%{opacity:.55}}
+
+/* ---------- about / slate ---------- */
+.about{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,96px);align-items:start}
+.about .lede{font-size:clamp(22px,2.4vw,30px);line-height:1.35;font-weight:500;max-width:30ch;margin-top:22px}
+.about .lede em{color:var(--violet);font-style:italic;text-shadow:0 0 18px rgba(181,140,255,.45)}
+.about .copy{display:grid;gap:18px;color:var(--dim);max-width:60ch;margin-top:22px}
+@media (max-width:860px){.about{grid-template-columns:1fr}}
+.slate{border:1px solid var(--rule);border-radius:4px;background:var(--booth);overflow:hidden;font-family:var(--mono)}
+.clap{height:46px;background:repeating-linear-gradient(-55deg,var(--film) 0 22px,var(--ink) 22px 44px);transform-origin:0 100%;transition:transform .5s cubic-bezier(.5,-0.4,.3,1.4)}
+.slate:hover .clap{transform:rotate(-9deg)}
+@media (prefers-reduced-motion:reduce){.clap{transition:none}}
+.slate-grid{display:grid;grid-template-columns:1fr 1fr}
+.cell{padding:16px 18px;border-top:1px solid var(--rule);min-width:0}
+.cell:nth-child(odd){border-right:1px solid var(--rule)}
+.cell.full{grid-column:1/-1;border-right:0}
+.cell small{display:block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.cell b{font-family:var(--display);font-weight:700;font-size:clamp(22px,2.6vw,30px);letter-spacing:.03em;text-transform:uppercase;line-height:1.05;display:block;overflow-wrap:anywhere}
+.cell b.tc{font-family:var(--mono);font-weight:500;font-size:20px;font-variant-numeric:tabular-nums;color:var(--ice)}
+
+/* ---------- craft ---------- */
+.craft{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule)}
+.craft article{padding:28px 28px 32px 0;display:grid;gap:12px;align-content:start;min-width:0}
+.craft article + article{padding-left:28px;border-left:1px solid var(--rule)}
+.craft h3{font-size:clamp(30px,3.4vw,44px)}
+.craft p{color:var(--dim)}
+@media (max-width:860px){.craft{grid-template-columns:1fr}.craft article,.craft article + article{padding:24px 0;border-left:0;border-bottom:1px solid var(--rule)}}
+
+/* ---------- lobby / socials ---------- */
+.lobby{background:linear-gradient(180deg,transparent,var(--night) 55%,transparent)}
+.lobby h2 .accent{background:linear-gradient(90deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.signs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:clamp(28px,4vw,48px)}
+.sign{display:grid;gap:18px;padding:24px;border:1px solid var(--rule);border-radius:4px;text-decoration:none;background:var(--booth);transition:border-color .25s,transform .25s,box-shadow .25s;min-width:0}
+.sign:hover{border-color:var(--blue);transform:translateY(-3px);box-shadow:0 18px 50px -20px rgba(47,134,255,.55)}
+.sign .top{display:flex;justify-content:space-between;align-items:center}
+.sign svg{width:26px;height:26px}
+.sign .arrow{width:18px;height:18px;color:var(--dim);transition:transform .25s,color .25s}
+.sign:hover .arrow{transform:translate(3px,-3px);color:var(--blue)}
+.sign b{font-family:var(--display);font-weight:900;font-size:clamp(30px,3.2vw,40px);text-transform:uppercase;line-height:1}
+.sign span{font-family:var(--mono);font-size:13px;color:var(--dim);overflow-wrap:anywhere}
+@media (max-width:760px){.signs{grid-template-columns:1fr}}
+.callsheet{margin-top:clamp(48px,7vw,96px);display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(24px,5vw,72px);align-items:center;padding:clamp(24px,4vw,44px);border:1px dashed var(--rule);border-radius:4px}
+.callsheet h3{font-size:clamp(34px,4.4vw,58px)}
+.callsheet p{color:var(--dim);margin-top:12px;max-width:48ch}
+@media (max-width:760px){.callsheet{grid-template-columns:1fr}}
+
+footer{border-top:1px solid var(--rule);padding-block:36px 44px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.endcard{font-family:var(--display);font-weight:900;font-size:clamp(80px,20vw,280px);line-height:.8;text-transform:uppercase;color:transparent;-webkit-text-stroke:1px var(--rule);text-align:center;padding-top:24px;user-select:none;overflow:hidden;white-space:nowrap}
+</style>
+
+</head>
+<body>
+<div class="atmos" aria-hidden="true"><canvas id="grain"></canvas></div>
+
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="D'Vision Motion Pictures, home">
+      <img class="logo" src="logo-nav.jpg" alt="D'Vision" width="235" height="56">
+    </a>
+    <ul>
+      <li><a href="#screening">Screening Room</a></li>
+      <li><a href="#catalogue">Catalogue</a></li>
+      <li><a href="#about">The Studio</a></li>
+      <li><a href="#lobby">Follow</a></li>
+    </ul>
+    <span class="live"><i></i>Miami, FL</span>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="frame">
+      <canvas id="light" aria-hidden="true"></canvas>
+      <img class="banner" id="banner" alt="" hidden>
+      <div class="guides" aria-hidden="true">
+        <span class="tl">D'VISION / ROLL 01</span>
+        <span class="tr">2.39 : 1</span>
+        <span class="bl">MIAMI · FLORIDA</span>
+        <span class="br" id="tc">00:00:00:00</span>
+        <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
+      </div>
+      <div class="title-card fade-up">
+        <img class="hero-mark" src="logo-wordmark.jpg" alt="D'Vision Motion Pictures" width="960" height="340">
+      </div>
+    </div>
+
+    <div class="hero-foot">
+      <div>
+        <span class="eyebrow">Independent film · Miami, Florida</span>
+        <h1 style="margin-top:14px">Be a <em>Visionary.</em></h1>
+      </div>
+      <div>
+        <p>D'Vision is a creator community out of Miami that takes the things we care about and turns them into film. Short films, stories and experiments, made independently and shared openly.</p>
+        <div class="cta-row">
+          <a class="btn solid" href="#screening">Watch the films</a>
+          <a class="btn" href="https://www.youtube.com/@dvisionmotionpictures?sub_confirmation=1" target="_blank" rel="noopener">Subscribe</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="strip" aria-hidden="true">
+  <div class="track">
+    <span>Be a Visionary</span><span>Miami Indie</span><span>Filmmaking</span><span>Productions</span><span>Florida</span><span>D'Vision Motion Pictures</span>
+    <span>Be a Visionary</span><span>Miami Indie</span><span>Filmmaking</span><span>Productions</span><span>Florida</span><span>D'Vision Motion Pictures</span>
+  </div>
+</div>
+
+<section id="screening">
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <span class="eyebrow">Now showing</span>
+        <h2>Screening<br>Room</h2>
+      </div>
+      <p>The latest D'Vision release is already rolling. Pick any title from the catalogue below and it plays right here.</p>
+    </div>
+
+    <div class="theater">
+      <div class="screen">
+        <div id="player"></div>
+        <div class="screen-msg" id="screenMsg"><b>Lights down</b>Loading the reel</div>
+        <button class="btn unmute" id="unmute" type="button" hidden>Sound on</button>
+      </div>
+      <aside class="now" aria-live="polite">
+        <span class="eyebrow" id="nowLabel">Now playing</span>
+        <h3 id="nowTitle">D'Vision Motion Pictures</h3>
+        <span class="meta" id="nowMeta">Reel 01</span>
+        <p id="nowDesc">Independent film from Miami, Florida.</p>
+        <div class="ctrls">
+          <button class="btn" type="button" id="prev">Prev</button>
+          <button class="btn" type="button" id="next">Next</button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="cat-head" id="catalogue">
+      <h3>The Catalogue</h3>
+      <span id="catCount">Every release</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<section id="about" style="padding-top:0">
+  <div class="wrap about">
+    <div>
+      <span class="eyebrow">The studio</span>
+      <h2 style="margin-top:14px">Made in<br>the 305.</h2>
+      <p class="lede">A community of creators exploring what moves them, and <em>sharing it through film.</em></p>
+      <div class="copy">
+        <p>D'Vision Motion Pictures started as a simple idea: if you have something you care about, point a camera at it. The work comes from Miami's streets, people and light, and from whatever the crew is obsessed with that season.</p>
+        <p>Everything is independent. The films are written, shot and cut by the people who live with them, then released for anyone to watch. That is what being a visionary means here: see it first, then make it real.</p>
+      </div>
+    </div>
+    <div class="slate" aria-label="Production slate">
+      <div class="clap" aria-hidden="true"></div>
+      <div class="slate-grid">
+        <div class="cell full"><small>Production</small><b>D'Vision Motion Pictures</b></div>
+        <div class="cell"><small>Location</small><b>Miami, FL</b></div>
+        <div class="cell"><small>Format</small><b>Indie Film</b></div>
+        <div class="cell"><small>Roll</small><b>01</b></div>
+        <div class="cell"><small>Released</small><b id="relCount">20 Videos</b></div>
+        <div class="cell"><small>Motto</small><b>Be a Visionary</b></div>
+        <div class="cell"><small>Timecode</small><b class="tc" id="tc2">00:00:00:00</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="craft">
+      <article><span class="eyebrow">Write</span><h3>Personal stories</h3><p>Films start from a real interest or a real person. The camera follows curiosity, not a formula.</p></article>
+      <article><span class="eyebrow">Shoot</span><h3>Miami as a set</h3><p>The city is the backdrop, the color palette and often the main character.</p></article>
+      <article><span class="eyebrow">Share</span><h3>Open to all</h3><p>Every release goes straight to the audience on YouTube, Instagram and Facebook.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="lobby" id="lobby">
+  <div class="wrap">
+    <span class="eyebrow">The lobby</span>
+    <h2 style="margin-top:14px">Follow the <span class="accent">vision.</span></h2>
+    <div class="signs">
+      <a class="sign" href="https://www.youtube.com/@dvisionmotionpictures" target="_blank" rel="noopener">
+        <div class="top">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.7 15.1V8.9l5.8 3.1z"/></svg>
+          <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M5 4h7v7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <b>YouTube</b><span>@dvisionmotionpictures</span>
+      </a>
+      <a class="sign" href="https://www.instagram.com/d.vision.mp/" target="_blank" rel="noopener">
+        <div class="top">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.6" cy="6.4" r="1.3" fill="currentColor"/></svg>
+          <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M5 4h7v7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <b>Instagram</b><span>@d.vision.mp</span>
+      </a>
+      <a class="sign" href="https://www.facebook.com/dvisionmediagroup/" target="_blank" rel="noopener">
+        <div class="top">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 21.5v-8h2.7l.4-3.2h-3.1v-2c0-.9.3-1.6 1.6-1.6h1.7V3.9c-.3 0-1.3-.1-2.5-.1-2.4 0-4.1 1.5-4.1 4.2v2.3H7.5v3.2h2.7v8z"/></svg>
+          <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12 12 4M5 4h7v7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <b>Facebook</b><span>/dvisionmediagroup</span>
+      </a>
+    </div>
+    <div class="callsheet">
+      <div>
+        <span class="eyebrow">Call sheet</span>
+        <h3 style="margin-top:12px">Got a vision?</h3>
+        <p>Actors, crew, musicians and brands in South Florida: send a message on Instagram to collaborate on the next D'Vision production.</p>
+      </div>
+      <div class="cta-row" style="margin-top:0">
+        <a class="btn solid" href="https://www.instagram.com/d.vision.mp/" target="_blank" rel="noopener">Message on Instagram</a>
+        <a class="btn" href="https://www.facebook.com/dvisionmediagroup/" target="_blank" rel="noopener">Facebook page</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="endcard" aria-hidden="true">D'Vision</div>
+<footer>
+  <div class="wrap">
+    <span>© <span id="yr">2026</span> D'Vision Motion Pictures · Miami, Florida</span>
+    <span>Be a Visionary</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const CONFIG = {
+    channelId: "UC7MOSSNwWJWGnAg0auxzziw",
+    playlist: "UU7MOSSNwWJWGnAg0auxzziw",            // every upload on the channel
+    banner: ["banner.jpg"],
+    expected: 20,
+  };
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = id => document.getElementById(id);
+  $("yr").textContent = new Date().getFullYear();
+
+  /* ---------- banner: first source that loads wins ---------- */
+  function firstImage(urls, done) {
+    let i = 0;
+    const tryNext = () => { if (i >= urls.length) return; const u = urls[i++]; const im = new Image(); im.onload = () => im.naturalWidth > 8 ? done(u) : tryNext(); im.onerror = tryNext; im.src = u; };
+    tryNext();
+  }
+  function setBanner(u) { const b = $("banner"); b.src = u; b.hidden = false; requestAnimationFrame(() => b.classList.add("on")); }
+  firstImage(CONFIG.banner, setBanner);
+
+  /* ---------- catalogue state ---------- */
+  let videos = [];        // {id,title,published,description}
+  let current = 0;
+  let player = null, muted = true;
+  const grid = $("grid");
+
+  // placeholders so the grid has shape before data arrives
+  for (let i = 0; i < CONFIG.expected; i++) {
+    const c = document.createElement("div");
+    c.className = "card ghost"; c.setAttribute("aria-hidden", "true");
+    c.innerHTML = `<div class="thumb"><span class="reelno">REEL ${String(i + 1).padStart(2, "0")}</span></div><b>&nbsp;</b><small>&nbsp;</small>`;
+    grid.appendChild(c);
+  }
+
+  const esc = s => String(s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmtDate = d => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+
+  function renderGrid() {
+    grid.innerHTML = "";
+    videos.forEach((v, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "card" + (i === current ? " playing" : "");
+      b.setAttribute("aria-label", `Play ${v.title || "reel " + (i + 1)}`);
+      b.innerHTML = `<div class="thumb"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg"><span class="reelno">REEL ${String(i + 1).padStart(2, "0")}</span></div>
+        <b>${esc(v.title) || "&nbsp;"}</b><small>${esc(fmtDate(v.published))}</small>`;
+      const img = b.querySelector("img");
+      img.onerror = () => { img.remove(); };
+      b.addEventListener("click", () => play(i, true));
+      grid.appendChild(b);
+    });
+    $("catCount").textContent = `${videos.length} releases`;
+    $("relCount").textContent = `${videos.length} Videos`;
+  }
+
+  function showNow() {
+    const v = videos[current]; if (!v) return;
+    $("nowLabel").textContent = current === 0 ? "Latest release" : "Now playing";
+    $("nowTitle").textContent = v.title || "D'Vision Motion Pictures";
+    $("nowMeta").textContent = [`Reel ${String(current + 1).padStart(2, "0")} of ${videos.length}`, fmtDate(v.published)].filter(Boolean).join(" · ");
+    $("nowDesc").textContent = v.description || "Independent film from D'Vision Motion Pictures, Miami.";
+    grid.querySelectorAll(".card").forEach((c, i) => c.classList.toggle("playing", i === current));
+  }
+
+  function play(i, fromUser) {
+    if (!videos.length) return;
+    current = (i + videos.length) % videos.length;
+    showNow();
+    if (player && player.loadVideoById) {
+      player.loadVideoById(videos[current].id);
+      if (fromUser) { player.unMute(); muted = false; $("unmute").hidden = true; }
+    }
+    if (fromUser) document.getElementById("screening").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+  }
+  $("prev").addEventListener("click", () => play(current - 1, true));
+  $("next").addEventListener("click", () => play(current + 1, true));
+  $("unmute").addEventListener("click", () => { if (player) { player.unMute(); muted = false; $("unmute").hidden = true; } });
+
+  // titles for videos we only know by id
+  async function fillTitles() {
+    await Promise.all(videos.map(async v => {
+      if (v.title) return;
+      try {
+        const r = await fetch(`https://noembed.com/embed?url=${encodeURIComponent("https://www.youtube.com/watch?v=" + v.id)}`);
+        const j = await r.json(); if (j.title) v.title = j.title;
+      } catch (e) {}
+    }));
+    renderGrid(); showNow();
+  }
+
+  /* ---------- data source 1: our own /api/channel (when hosted on Vercel) ---------- */
+  async function fromApi() {
+    const r = await fetch("api/channel", { cache: "no-store" });
+    if (!r.ok) throw 0;
+    const j = await r.json();
+    if (!j.videos || !j.videos.length) throw 0;
+    if (j.channel && j.channel.banner) firstImage(["banner.jpg", j.channel.banner], setBanner);
+    return j.videos;
+  }
+
+  /* ---------- player: YouTube IFrame API, muted autoplay so no play button sits on the picture ---------- */
+  function loadYT() {
+    return new Promise((res, rej) => {
+      if (window.YT && YT.Player) return res();
+      window.onYouTubeIframeAPIReady = res;
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api"; s.onerror = rej;
+      document.head.appendChild(s);
+      setTimeout(() => rej("timeout"), 12000);
+    });
+  }
+
+  async function boot() {
+    let api = null;
+    try { api = await fromApi(); } catch (e) {}
+    try { await loadYT(); } catch (e) {
+      $("screenMsg").innerHTML = "<b>Projector offline</b>The player could not load here. Watch on the live site.";
+      return;
+    }
+    const vars = { autoplay: 1, mute: 1, controls: 1, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, color: "white" };
+    const opts = { width: "100%", height: "100%", host: "https://www.youtube-nocookie.com", playerVars: vars, events: {} };
+    if (api) { videos = api; opts.videoId = videos[0].id; }
+    else { vars.listType = "playlist"; vars.list = CONFIG.playlist; }
+
+    opts.events.onReady = e => {
+      $("screenMsg").hidden = true;
+      $("unmute").hidden = false;
+      e.target.mute(); e.target.playVideo();
+      if (!api) {
+        // read every upload id from the playlist, then take over playback per video
+        const tryList = (n = 0) => {
+          const ids = e.target.getPlaylist && e.target.getPlaylist();
+          if (ids && ids.length) {
+            videos = ids.map(id => ({ id }));
+            const data = e.target.getVideoData && e.target.getVideoData();
+            if (data && data.video_id) { const k = ids.indexOf(data.video_id); if (k >= 0) { current = k; videos[k].title = data.title; } }
+            renderGrid(); showNow(); fillTitles();
+          } else if (n < 20) setTimeout(() => tryList(n + 1), 300);
+        };
+        tryList();
+      } else { renderGrid(); showNow(); }
+    };
+    opts.events.onStateChange = e => {
+      if (e.data === 0 && videos.length) play(current + 1, false);   // ended: roll the next reel
+      if (e.data === 1 && !api && e.target.getVideoData) {
+        const d = e.target.getVideoData(); const k = videos.findIndex(v => v.id === d.video_id);
+        if (k >= 0 && k !== current) { current = k; if (!videos[k].title) videos[k].title = d.title; showNow(); }
+      }
+    };
+    player = new YT.Player("player", opts);
+  }
+  boot();
+
+  /* ---------- timecode at 24 fps ---------- */
+  const tcEls = [$("tc"), $("tc2")], t0 = performance.now(), pad = n => String(n).padStart(2, "0");
+  (function tick(now) {
+    const f = Math.floor((now - t0) / (1000 / 24)), s = Math.floor(f / 24), m = Math.floor(s / 60), h = Math.floor(m / 60);
+    const tc = `${pad(h)}:${pad(m % 60)}:${pad(s % 60)}:${pad(f % 24)}`;
+    tcEls.forEach(el => el.textContent = tc);
+    if (!reduce) requestAnimationFrame(tick);
+  })(t0);
+
+  /* ---------- hero light: cool projector beam and drifting dust ---------- */
+  const cv = $("light"), cx = cv.getContext("2d");
+  let W, H, dust = [];
+  function size() {
+    const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+    W = cv.width = Math.max(1, r.width * d); H = cv.height = Math.max(1, r.height * d);
+    dust = Array.from({ length: 80 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.5 * d + .3, v: Math.random() * .22 + .04, a: Math.random() }));
+  }
+  function draw(t) {
+    cx.fillStyle = "#020409"; cx.fillRect(0, 0, W, H);
+    const sway = Math.sin(t / 4200) * W * .06;
+    const g = cx.createRadialGradient(W * .5 + sway, H * 1.2, 0, W * .5 + sway, H * 1.2, H * 1.6);
+    g.addColorStop(0, "rgba(47,134,255,.45)"); g.addColorStop(.5, "rgba(20,60,140,.15)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    const vg = cx.createRadialGradient(W * .5, H * .78, 0, W * .5, H * .78, W * .45);
+    vg.addColorStop(0, "rgba(150,100,255,.16)"); vg.addColorStop(1, "rgba(0,0,0,0)");
+    cx.fillStyle = vg; cx.fillRect(0, 0, W, H);
+    cx.save(); cx.globalCompositeOperation = "lighter";
+    const cone = cx.createLinearGradient(0, 0, W, H);
+    cone.addColorStop(0, "rgba(156,200,255,.10)"); cone.addColorStop(1, "rgba(156,200,255,0)");
+    cx.fillStyle = cone; cx.beginPath(); cx.moveTo(-W * .05, -H * .1);
+    cx.lineTo(W * (.95 + Math.sin(t / 5000) * .05), H * .55); cx.lineTo(W * (.7 + Math.sin(t / 5000) * .05), H * 1.1); cx.closePath(); cx.fill();
+    for (const p of dust) {
+      p.y -= p.v; p.x += Math.sin(t / 1000 + p.a * 10) * .2; if (p.y < 0) { p.y = H; p.x = Math.random() * W; }
+      cx.fillStyle = `rgba(200,225,255,${.2 + .35 * Math.abs(Math.sin(t / 900 + p.a * 6))})`;
+      cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.283); cx.fill();
+    }
+    cx.restore();
+    if (!reduce) requestAnimationFrame(draw);
+  }
+  size(); addEventListener("resize", size); requestAnimationFrame(draw);
+
+  /* ---------- background grain: drawn once, slow shimmer, sits behind content ---------- */
+  const gr = $("grain"), gx = gr.getContext("2d");
+  gr.width = 256; gr.height = 256;
+  const img = gx.createImageData(256, 256);
+  function grain() {
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255 | 0; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    gx.putImageData(img, 0, 0);
+  }
+  grain();
+  if (!reduce) setInterval(grain, 400);
+})();
+</script>
+
+</body>
+</html>
