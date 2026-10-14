@@ -463,7 +463,6 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
   <div class="wrap">
     <div class="frame">
       <canvas id="light" aria-hidden="true"></canvas>
-      <img class="banner" id="banner" alt="" hidden>
       <div class="hero-film" id="heroFilm" aria-hidden="true"><div id="heroPlayer"></div></div>
       <div class="guides" aria-hidden="true">
         <span class="tl">D'VISION / ROLL 01</span>
@@ -629,21 +628,12 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
   const CONFIG = {
     channelId: "UC7MOSSNwWJWGnAg0auxzziw",
     playlist: "UU7MOSSNwWJWGnAg0auxzziw",            // every upload on the channel
-    banner: ["banner.jpg"],
     expected: 20,
   };
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = id => document.getElementById(id);
   $("yr").textContent = new Date().getFullYear();
 
-  /* ---------- banner: first source that loads wins ---------- */
-  function firstImage(urls, done) {
-    let i = 0;
-    const tryNext = () => { if (i >= urls.length) return; const u = urls[i++]; const im = new Image(); im.onload = () => im.naturalWidth > 8 ? done(u) : tryNext(); im.onerror = tryNext; im.src = u; };
-    tryNext();
-  }
-  function setBanner(u) { const b = $("banner"); b.src = u; b.hidden = false; requestAnimationFrame(() => b.classList.add("on")); }
-  firstImage(CONFIG.banner, setBanner);
 
   /* ---------- catalogue state ---------- */
   let videos = [];        // {id,title,published,description}
@@ -720,7 +710,6 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
     if (!r.ok) throw 0;
     const j = await r.json();
     if (!j.videos || !j.videos.length) throw 0;
-    if (j.channel && j.channel.banner) firstImage(["banner.jpg", j.channel.banner], setBanner);
     return j.videos;
   }
 
@@ -779,7 +768,7 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
   boot();
 
   /* ---------- hero background film ---------- */
-  const HERO = { id: "4mx-0zOmGFc", start: 3 };
+  const HERO = { id: "4mx-0zOmGFc", start: 3 };   // visible from 0:03; the first seconds play hidden while YouTube's on-screen buttons fade away
   (async () => {
     const wrap = document.getElementById("heroFilm"), frame = wrap.parentElement;
     // cover the frame like object-fit:cover, then overscan so YouTube's title bar and overlays sit outside the visible area
@@ -801,7 +790,7 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
       const check = () => {
         if (shown) return;
         const c = p.getCurrentTime ? p.getCurrentTime() : 0;
-        if (p.getPlayerState() === 1 && c >= HERO.start + .4 && c > t0 + .3) { shown = true; setTimeout(() => wrap.classList.add("on"), 300); }
+        if (p.getPlayerState() === 1 && c >= HERO.start && c > t0 + .3) { shown = true; setTimeout(() => wrap.classList.add("on"), 300); }
         else setTimeout(check, 150);
       };
       check();
@@ -811,17 +800,17 @@ html.intro-lock,html.intro-lock body{overflow:hidden}
       const d = hp.getDuration(), c = hp.getCurrentTime();
       if (d && c > d - 1.8 && !looping) {   // fade out, jump back to 0:03 before the end screen, fade in when moving again
         looping = true; wrap.classList.remove("on");
-        setTimeout(() => { hp.seekTo(HERO.start, true); hp.playVideo(); shown = false; looping = false; waitForFrames(hp); }, 1300);
+        setTimeout(() => { hp.seekTo(0, true); hp.playVideo(); shown = false; looping = false; waitForFrames(hp); }, 1300);
       }
     };
     hp = new YT.Player("heroPlayer", {
       width: "100%", height: "100%", videoId: HERO.id, host: "https://www.youtube-nocookie.com",
-      playerVars: { autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3, start: HERO.start, loop: 1, playlist: HERO.id },
+      playerVars: { autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, playsinline: 1, iv_load_policy: 3 },
       events: {
-        onReady: e => { e.target.mute(); e.target.seekTo(HERO.start, true); e.target.playVideo(); setInterval(keepRolling, 250); },
+        onReady: e => { e.target.mute(); e.target.playVideo(); setInterval(keepRolling, 250); },
         onStateChange: e => {
           if (e.data === 1 && !shown) waitForFrames(e.target);
-          if (e.data === 0) { e.target.seekTo(HERO.start, true); e.target.playVideo(); }
+          if (e.data === 0) { wrap.classList.remove("on"); shown = false; e.target.seekTo(0, true); e.target.playVideo(); waitForFrames(e.target); }
           if (e.data === 2) e.target.playVideo();   // never stay paused
         }
       }
